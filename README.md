@@ -65,6 +65,50 @@ The demo uses docker and  Terraform to create the infrastructure and launch the 
 
 **Note:** It may take a minute or two for the site to become available, as the JVM needs to create all the database objects.
 
+
+## Demo 
+
+  For our demo, we will be removing and adding nodes from a Consul Service to demo end to end flow of Check Point and Consul integration
+
+  From demo-consul-server
+
+  1. This will show current services and nodes
+  
+  ```
+  docker ps -a
+  ```
+
+  2. Confirm web1 has 3 services
+
+  ```
+  consul webui: https://<consul-server-ip>:8500
+  ```
+
+  3. Stop the web1 container
+
+    - This command will stop the web1 container
+    - It will deregister the demo_web1_1 service in Consul WebUI
+    - CTA will also remove this node from the web1 dynamic object in Check Point SmartConsol
+
+  ```
+  docker stop demo_web1_1
+  ```
+
+  4. Start the web1 container
+
+  ```
+  docker start demo_web_1
+  ```
+
+  5. Register the demo_web1_1 service
+
+    - CTA will add this node to the web1 dynamic object in Check Point SmartConsol
+      
+  ```
+  docker exec -it demo_web1_1 curl -s -X PUT -d @/web1.json "http://127.0.0.1:8500/v1/agent/service/register"
+  ```
+
+
 ## Registering and Deregistering Services and Intentions
 Once Terraform finishes executing, you should have a working consul lab enviroment. You can `ssh` in to the demo Consul VM that has been deployed into the environent to register or deregister the services.
 
@@ -84,6 +128,7 @@ b36914ea2335        nicholasjackson/consul_connect_agent:latest   "consul agent 
 472438a815d9        nicholasjackson/consul_connect_agent:latest   "consul agent -confi…"   33 minutes ago      Up 33 minutes       8300-8302/tcp, 8500/tcp, 8301-8302/udp, 8600/tcp, 8600/udp                 demo_app2_1
 5b8951940d35        nicholasjackson/consul_connect_agent:latest   "consul agent -confi…"   33 minutes ago      Up 33 minutes       8300-8302/tcp, 8500/tcp, 8301-8302/udp, 8600/tcp, 8600/udp                 demo_app1_1
 ```
+
 * Registering services
   ```
   # Register Web services
@@ -98,7 +143,7 @@ b36914ea2335        nicholasjackson/consul_connect_agent:latest   "consul agent 
   docker exec -it demo_db1_1 curl -s -X PUT -d @/db1.json "http://127.0.0.1:8500/v1/agent/service/register"
   docker exec -it demo_db2_1 curl -s -X PUT -d @/db2.json "http://127.0.0.1:8500/v1/agent/service/register"
   ```
-* Deregistering services
+* Deregister services
   ```
   # Deregister Web service
   docker exec -it demo_web1_1 curl -s -X PUT "http://127.0.0.1:8500/v1/agent/service/deregister/web"
@@ -116,9 +161,17 @@ b36914ea2335        nicholasjackson/consul_connect_agent:latest   "consul agent 
   ```
   If the above does not work, you will need to stop the container that the service lives
   ```
+  - Stop the containers
   docker stop demo_web1_1
   docker stop demo_app1_1
   docker stop demo_db1_1
+
+  - Start the containers
+  docker start demo_web1_1
+  docker start demo_app1_1
+  docker start demo_db1_1
+
+  Run the register services command from above
   ```
 * Adding intentions
   ```
